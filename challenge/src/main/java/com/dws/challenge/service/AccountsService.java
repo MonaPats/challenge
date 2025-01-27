@@ -21,19 +21,8 @@ public class AccountsService {
     this.accountsRepository = accountsRepository;
   }
 
+  //***Added NEW code
 
-  /*public void createAccount(Account account) {
-
-    this.accountsRepository.createAccount(account);
-  }
-
-  public Account getAccount(String accountId) {
-
-    return this.accountsRepository.getAccount(accountId);
-  }*/
-
-
-  //add
   // Create a new account
   public void createAccount(Account account) throws DuplicateAccountIdException {
     accountsRepository.createAccount(account);

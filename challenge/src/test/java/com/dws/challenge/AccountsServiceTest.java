@@ -21,6 +21,26 @@ class AccountsServiceTest {
   @Autowired
   private AccountsService accountsService;
 
+  // Newly Added
+
+  private String accountFromId = "Id-123";
+  private String accountToId = "Id-456";
+
+  @BeforeEach
+  void setUp() throws DuplicateAccountIdException {
+    // Reset repository before each test.
+    accountsService.getAccountsRepository().clearAccounts();
+
+    // Create two initial accounts
+    Account accountFrom = new Account(accountFromId);
+    accountFrom.setBalance(new BigDecimal(1000));
+    accountsService.createAccount(accountFrom);
+
+    Account accountTo = new Account(accountToId);
+    accountTo.setBalance(new BigDecimal(500));
+    accountsService.createAccount(accountTo);
+  }
+
   @Test
   void addAccount() {
     Account account = new Account("Id-123");
@@ -43,4 +63,77 @@ class AccountsServiceTest {
       assertThat(ex.getMessage()).isEqualTo("Account id " + uniqueId + " already exists!");
     }
   }
+
+//Newly updated Code
+
+  @Test
+  void transferMoney_Successful() {
+    // Arrange
+    BigDecimal transferAmount = new BigDecimal(200);
+
+    // Act
+    accountsService.transfer(accountFromId, accountToId, transferAmount);
+
+    // Assert
+    Account accountFrom = accountsService.getAccount(accountFromId);
+    Account accountTo = accountsService.getAccount(accountToId);
+
+    assertThat(accountFrom.getBalance()).isEqualByComparingTo("800");
+    assertThat(accountTo.getBalance()).isEqualByComparingTo("700");
+  }
+
+  @Test
+  void transferMoney_InsufficientBalance() {
+    // Arrange
+    BigDecimal transferAmount = new BigDecimal(2000);  // More than available in accountFrom
+
+    // Act & Assert
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+      accountsService.transfer(accountFromId, accountToId, transferAmount);
+    });
+
+    assertThat(exception.getMessage()).isEqualTo("Insufficient balance");
+  }
+
+  @Test
+  void transferMoney_AccountFromNotFound() {
+    // Arrange
+    String nonExistentAccountId = "nonexistent-account";
+    BigDecimal transferAmount = new BigDecimal(100);
+
+    // Act & Assert
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+      accountsService.transfer(nonExistentAccountId, accountToId, transferAmount);
+    });
+
+    assertThat(exception.getMessage()).isEqualTo("Account not found: " + nonExistentAccountId);
+  }
+
+  @Test
+  void transferMoney_AccountToNotFound() {
+    // Arrange
+    String nonExistentAccountId = "nonexistent-account";
+    BigDecimal transferAmount = new BigDecimal(100);
+
+    // Act & Assert
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+      accountsService.transfer(accountFromId, nonExistentAccountId, transferAmount);
+    });
+
+    assertThat(exception.getMessage()).isEqualTo("Account not found: " + nonExistentAccountId);
+  }
+
+  @Test
+  void transferMoney_NegativeAmount() {
+    // Arrange
+    BigDecimal transferAmount = new BigDecimal(-100);  // Invalid negative amount
+
+    // Act & Assert
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+      accountsService.transfer(accountFromId, accountToId, transferAmount);
+    });
+
+    assertThat(exception.getMessage()).isEqualTo("Amount must be positive");
+  }
+}
 }
