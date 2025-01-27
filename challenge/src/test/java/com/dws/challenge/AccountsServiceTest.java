@@ -23,6 +23,10 @@ class AccountsServiceTest {
 
   // Newly Added
 
+  @Autowired
+  private NotificationService notificationService;
+
+
   private String accountFromId = "Id-123";
   private String accountToId = "Id-456";
 
@@ -135,5 +139,31 @@ class AccountsServiceTest {
 
     assertThat(exception.getMessage()).isEqualTo("Amount must be positive");
   }
+}
+
+
+@Test
+void testTransferMoney() {
+  Account account1 = new Account("Id-123", new BigDecimal("1000"));
+  Account account2 = new Account("Id-124", new BigDecimal("500"));
+  accountsService.createAccount(account1);
+  accountsService.createAccount(account2);
+
+  // Mock NotificationService
+  doNothing().when(notificationService).sendNotification(anyString(), anyString());
+
+  // Perform transfer
+  moneyTransferService.transfer("Id-123", "Id-124", new BigDecimal("100"));
+
+  // Verify the balances after the transfer
+  Account accountFrom = accountsService.getAccount("Id-123");
+  Account accountTo = accountsService.getAccount("Id-124");
+
+  assertThat(accountFrom.getBalance()).isEqualByComparingTo("900");
+  assertThat(accountTo.getBalance()).isEqualByComparingTo("600");
+
+  // Verify that notifications were sent
+  verify(notificationService, times(2)).sendNotification(anyString(), anyString());
+}
 }
 }
