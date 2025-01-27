@@ -64,7 +64,7 @@ public class AccountsController {
 
 }
 
-//new***
+//new
 // Transfer money between two accounts
 @PostMapping("/transfer")
 public void transferMoney(@RequestParam String fromAccountId,
@@ -72,28 +72,3 @@ public void transferMoney(@RequestParam String fromAccountId,
                           @RequestParam BigDecimal amount) {
   moneyTransferService.transfer(fromAccountId, toAccountId, amount);
 }
-
-
-
-
-
-
-
-
-
-//Logging Success and Errors:
-//
-//Added a success log after the account is created.
-//Added an error log for the case when a DuplicateAccountIdException is caught.
-//Logged a warning when an account is not found for a given accountId.
-//Improved Error Handling:
-//
-//POST /v1/accounts: On successful creation, returns HTTP status 201 Created. If there is an exception due to a duplicate account ID, returns HTTP status 400 Bad Request.
-//GET /v1/accounts/{accountId}: If the account is found, it returns the account data with HTTP status 200 OK. If the account is not found, it returns HTTP status 404 Not Found.
-//Response Entity Return Type:
-//
-//createAccount: Returns a ResponseEntity<Object>, which is suitable for sending back a 201 status code with no body on success or an error message in the body when the account already exists.
-//        getAccount: Returns a ResponseEntity<Account>, which ensures proper content type handling when the account is found and returns the appropriate HTTP status when not found.
-//Ensure the AccountsService class handles the logic for account creation and retrieval properly.
-//Implement DuplicateAccountIdException if not already implemented, ensuring it provides a meaningful error message when an attempt is made to create an account with an already existing ID.
-//Optionally, consider adding a global exception handler using @ControllerAdvice to centralize error handling in your application.
