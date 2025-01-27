@@ -16,9 +16,10 @@ public class AccountsService {
   private NotificationService notificationService;
 
   @Autowired
-  public AccountsService(AccountsRepository accountsRepository) {
-
+  public AccountsService(AccountsRepository accountsRepository,NotificationService notificationService) {
+    {
     this.accountsRepository = accountsRepository;
+    his.notificationService = notificationService;
   }
 
   //***Added NEW code
@@ -38,17 +39,17 @@ public class AccountsService {
     synchronized (this) {
       Account accountFrom = accountsRepository.getAccount(accountFromId);
       if (accountFrom == null) {
-        throw new IllegalArgumentException("Account not found: " + accountFromId);
+        throw new AccountNotFoundException("Account not found: " + accountFromId);
       }
 
       Account accountTo = accountsRepository.getAccount(accountToId);
       if (accountTo == null) {
-        throw new IllegalArgumentException("Account not found: " + accountToId);
+        throw new AccountNotFoundException("Account not found: " + accountToId);
       }
 
       // Ensure the sender has enough balance
       if (accountFrom.getBalance().compareTo(amount) < 0) {
-        throw new IllegalArgumentException("Insufficient balance");
+        throw new InsufficientBalanceException("Insufficient balance");
       }
 
       // Perform the transfer

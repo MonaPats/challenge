@@ -32,7 +32,7 @@ public class AccountsController {
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Object> createAccount(@RequestBody @Valid Account account) {
     log.info("Creating account {}", account);
-//added log
+  //added log
     try {
     this.accountsService.createAccount(account);
       log.info("Account created successfully with id {}", account.getAccountId());

@@ -21,6 +21,10 @@ class AccountsServiceTest {
   @Autowired
   private AccountsService accountsService;
 
+  @Mock
+  private AccountsRepository accountsRepository;
+
+
   // Newly Added
 
   @Autowired
