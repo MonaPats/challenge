@@ -16,7 +16,7 @@ public class DuplicateAccountIdException extends RuntimeException {
   }
 
   //Added new
-  public class InsufficientBalanceException extends RuntimeException {
+  public static class InsufficientBalanceException extends RuntimeException {
     public InsufficientBalanceException(String message) {
       super(message);
     }

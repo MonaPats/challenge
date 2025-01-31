@@ -1,15 +1,22 @@
 package com.dws.challenge;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
 
 import com.dws.challenge.domain.Account;
 import com.dws.challenge.exception.DuplicateAccountIdException;
-import com.dws.challenge.service.AccountsService;
+import com.dws.challenge.repository.AccountsRepository;
+import com.dws.challenge.service.AccountsServiceImpl;
+import com.dws.challenge.service.NotificationService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -19,7 +26,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 class AccountsServiceTest {
 
   @Autowired
-  private AccountsService accountsService;
+  private AccountsServiceImpl accountsService;
 
   @Mock
   private AccountsRepository accountsRepository;
@@ -143,7 +150,7 @@ class AccountsServiceTest {
 
     assertThat(exception.getMessage()).isEqualTo("Amount must be positive");
   }
-}
+
 
 
 @Test
@@ -157,7 +164,7 @@ void testTransferMoney() {
   doNothing().when(notificationService).sendNotification(anyString(), anyString());
 
   // Perform transfer
-  moneyTransferService.transfer("Id-123", "Id-124", new BigDecimal("100"));
+  accountsService.transfer("Id-123", "Id-124", new BigDecimal("100"));
 
   // Verify the balances after the transfer
   Account accountFrom = accountsService.getAccount("Id-123");
@@ -170,4 +177,4 @@ void testTransferMoney() {
   verify(notificationService, times(2)).sendNotification(anyString(), anyString());
 }
 }
-}
+

@@ -2,30 +2,28 @@ package com.dws.challenge.web;
 
 import com.dws.challenge.domain.Account;
 import com.dws.challenge.exception.DuplicateAccountIdException;
-import com.dws.challenge.service.AccountsService;
+import com.dws.challenge.service.AccountsServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/v1/accounts")
 @Slf4j
 public class AccountsController {
 
-  private final AccountsService accountsService;
+  @Autowired
+  private AccountsServiceImpl accountsService;
+
 
   @Autowired
-  public AccountsController(AccountsService accountsService) {
+  public AccountsController(AccountsServiceImpl accountsService) {
     this.accountsService = accountsService;
   }
 
@@ -44,7 +42,7 @@ public class AccountsController {
       return new ResponseEntity<>(daie.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
-    return new ResponseEntity<>(HttpStatus.CREATED);
+    //return new ResponseEntity<>(HttpStatus.CREATED);
   }
 
   @GetMapping(path = "/{accountId}")
@@ -56,19 +54,19 @@ public class AccountsController {
 
     if (account == null) {
       log.warn("Account not found for id {}", accountId);
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);  // HTTP 404 - Not Found
+     // return new ResponseEntity<>(HttpStatus.NOT_FOUND);  // HTTP 404 - Not Found
     }
-    return new ResponseEntity<>(account, HttpStatus.OK);  // HTTP 200 - OK
+   // return new ResponseEntity<>(account, HttpStatus.OK);  // HTTP 200 - OK
     return this.accountsService.getAccount(accountId);
   }
-
-}
-
-//new
+  //new
 // Transfer money between two accounts
-@PostMapping("/transfer")
-public void transferMoney(@RequestParam String fromAccountId,
-                          @RequestParam String toAccountId,
-                          @RequestParam BigDecimal amount) {
-  moneyTransferService.transfer(fromAccountId, toAccountId, amount);
+  @PostMapping("/transfer")
+  public void transferMoney(@RequestParam String fromAccountId,
+                            @RequestParam String toAccountId,
+                            @RequestParam BigDecimal amount) {
+    this.accountsService.transfer(fromAccountId, toAccountId, amount);
+  }
 }
+
+

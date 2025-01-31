@@ -1,6 +1,10 @@
 package com.dws.challenge;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -10,7 +14,10 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 import java.math.BigDecimal;
 
 import com.dws.challenge.domain.Account;
-import com.dws.challenge.service.AccountsService;
+import com.dws.challenge.repository.AccountsRepository;
+import com.dws.challenge.service.AccountService;
+import com.dws.challenge.service.AccountsServiceImpl;
+import lombok.Getter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +37,10 @@ class AccountsControllerTest {
   private MockMvc mockMvc;
 
   @Autowired
-  private AccountsService accountsService;
+  private AccountService accountsService;
+
+  @Autowired
+  private AccountsRepository accountsRepository;
 
   @Autowired
   private WebApplicationContext webApplicationContext;
@@ -40,13 +50,13 @@ class AccountsControllerTest {
     this.mockMvc = webAppContextSetup(this.webApplicationContext).build();
 
     // Reset the existing accounts before each test.
-    accountsService.getAccountsRepository().clearAccounts();
+    accountsRepository.clearAccounts();
   }
 
   @Test
   void createAccount() throws Exception {
     this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"Id-123\",\"balance\":1000}")).andExpect(status().isCreated());
+            .content("{\"accountId\":\"Id-123\",\"balance\":1000}")).andExpect(status().isCreated());
 
     Account account = accountsService.getAccount("Id-123");
     assertThat(account.getAccountId()).isEqualTo("Id-123");
@@ -56,40 +66,40 @@ class AccountsControllerTest {
   @Test
   void createDuplicateAccount() throws Exception {
     this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"Id-123\",\"balance\":1000}")).andExpect(status().isCreated());
+            .content("{\"accountId\":\"Id-123\",\"balance\":1000}")).andExpect(status().isCreated());
 
     this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"Id-123\",\"balance\":1000}")).andExpect(status().isBadRequest());
+            .content("{\"accountId\":\"Id-123\",\"balance\":1000}")).andExpect(status().isBadRequest());
   }
 
   @Test
   void createAccountNoAccountId() throws Exception {
     this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"balance\":1000}")).andExpect(status().isBadRequest());
+            .content("{\"balance\":1000}")).andExpect(status().isBadRequest());
   }
 
   @Test
   void createAccountNoBalance() throws Exception {
     this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"Id-123\"}")).andExpect(status().isBadRequest());
+            .content("{\"accountId\":\"Id-123\"}")).andExpect(status().isBadRequest());
   }
 
   @Test
   void createAccountNoBody() throws Exception {
     this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON))
-      .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest());
   }
 
   @Test
   void createAccountNegativeBalance() throws Exception {
     this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"Id-123\",\"balance\":-1000}")).andExpect(status().isBadRequest());
+            .content("{\"accountId\":\"Id-123\",\"balance\":-1000}")).andExpect(status().isBadRequest());
   }
 
   @Test
   void createAccountEmptyAccountId() throws Exception {
     this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"\",\"balance\":1000}")).andExpect(status().isBadRequest());
+            .content("{\"accountId\":\"\",\"balance\":1000}")).andExpect(status().isBadRequest());
   }
 
   @Test
@@ -98,9 +108,9 @@ class AccountsControllerTest {
     Account account = new Account(uniqueAccountId, new BigDecimal("123.45"));
     this.accountsService.createAccount(account);
     this.mockMvc.perform(get("/v1/accounts/" + uniqueAccountId))
-      .andExpect(status().isOk())
-      .andExpect(
-        content().string("{\"accountId\":\"" + uniqueAccountId + "\",\"balance\":123.45}"));
+            .andExpect(status().isOk())
+            .andExpect(
+                    content().string("{\"accountId\":\"" + uniqueAccountId + "\",\"balance\":123.45}"));
   }
 
   //Adding NEW code
@@ -128,7 +138,7 @@ class AccountsControllerTest {
     this.mockMvc.perform(get("/v1/accounts/" + nonExistentAccountId))
             .andExpect(status().isNotFound());  // Expecting HTTP 404 Not Found
   }
-}
+
 
   private String accountFromId = "account1";
   private String accountToId = "account2";
@@ -159,7 +169,7 @@ class AccountsControllerTest {
             .andExpect(status().isOk());
 
     // Verify: Check if the service method was called
-    verify(moneyTransferService).transfer(accountFromId, accountToId, transferAmount);
+    verify(accountsService).transfer(accountFromId, accountToId, transferAmount);
 
     // Optionally, verify account balances after the transfer
     Account fromAccount = accountsService.getAccount(accountFromId);
@@ -183,7 +193,7 @@ class AccountsControllerTest {
             .andExpect(status().isBadRequest());  // Expecting a failure due to insufficient funds
 
     // Verify: Ensure that transfer was not attempted
-    verify(moneyTransferService, never()).transfer(anyString(), anyString(), any(BigDecimal.class));
+    verify(accountsService, never()).transfer(anyString(), anyString(), any(BigDecimal.class));
   }
 
   @Test
@@ -200,7 +210,7 @@ class AccountsControllerTest {
             .andExpect(status().isBadRequest());  // Expecting a failure due to invalid amount
 
     // Verify: Ensure that transfer was not attempted
-    verify(moneyTransferService, never()).transfer(anyString(), anyString(), any(BigDecimal.class));
+    verify(accountsService, never()).transfer(anyString(), anyString(), any(BigDecimal.class));
   }
 
   @Test
@@ -218,7 +228,7 @@ class AccountsControllerTest {
             .andExpect(status().isNotFound());  // Expecting 404 due to non-existing account
 
     // Verify: Ensure that transfer was not attempted
-    verify(moneyTransferService, never()).transfer(anyString(), anyString(), any(BigDecimal.class));
+    verify(accountsService, never()).transfer(anyString(), anyString(), any(BigDecimal.class));
   }
 
   @Test
@@ -235,7 +245,7 @@ class AccountsControllerTest {
             .andExpect(status().isBadRequest());  // Expecting failure as transfer to same account is not valid
 
     // Verify: Ensure that transfer was not attempted
-    verify(moneyTransferService, never()).transfer(anyString(), anyString(), any(BigDecimal.class));
+    verify(accountsService, never()).transfer(anyString(), anyString(), any(BigDecimal.class));
   }
-
 }
+
